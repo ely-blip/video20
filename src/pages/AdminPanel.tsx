@@ -1,46 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../context/AdminContext';
-import { 
-  Settings, 
-  DollarSign, 
-  MapPin, 
-  BookOpen, 
-  Bell, 
-  Download, 
-  Upload, 
-  Sync, 
-  LogOut, 
-  Eye, 
-  EyeOff, 
-  Save, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Check, 
-  X, 
-  AlertCircle, 
-  Info, 
-  RefreshCw,
-  Code,
-  FileText,
-  Database,
-  Zap,
-  Shield,
-  Activity,
-  Clock,
-  Users,
-  TrendingUp,
-  BarChart3,
-  Calendar,
-  Smartphone,
-  Monitor,
-  Wifi,
-  WifiOff,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  MessageSquare
-} from 'lucide-react';
+import { Settings, DollarSign, MapPin, BookOpen, Bell, Download, Upload, FolderSync as Sync, LogOut, Eye, EyeOff, Save, Plus, Edit, Trash2, Check, X, AlertCircle, Info, RefreshCw, Code, FileText, Database, Zap, Shield, Activity, Clock, Users, TrendingUp, BarChart3, Calendar, Smartphone, Monitor, Wifi, WifiOff, CheckCircle, XCircle, AlertTriangle, MessageSquare } from 'lucide-react';
 
 interface LoginFormProps {
   onLogin: (username: string, password: string) => void;
