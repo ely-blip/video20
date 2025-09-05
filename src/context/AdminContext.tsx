@@ -678,8 +678,14 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         action: 'export_source_start'
       });
 
-      const { generateCompleteSourceCode } = await import('../utils/sourceCodeGenerator');
-      await generateCompleteSourceCode(state.systemConfig);
+      // Importar dinámicamente el generador de código fuente
+      try {
+        const { generateCompleteSourceCode } = await import('../utils/sourceCodeGenerator');
+        await generateCompleteSourceCode(state.systemConfig);
+      } catch (importError) {
+        console.error('Error importing source code generator:', importError);
+        throw new Error('No se pudo cargar el generador de código fuente');
+      }
 
       addNotification({
         type: 'success',
@@ -693,10 +699,11 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       addNotification({
         type: 'error',
         title: 'Error en la exportación de código',
-        message: 'No se pudo exportar el código fuente completo',
+        message: error instanceof Error ? error.message : 'No se pudo exportar el código fuente completo',
         section: 'Sistema',
         action: 'export_source_error'
       });
+      throw error;
     }
   };
 

@@ -3,6 +3,7 @@ import type { SystemConfig } from '../context/AdminContext';
 
 // Generate complete source code with embedded configuration
 export async function generateCompleteSourceCode(systemConfig: SystemConfig): Promise<void> {
+  try {
   const zip = new JSZip();
 
   // Generate README
@@ -110,6 +111,10 @@ export async function generateCompleteSourceCode(systemConfig: SystemConfig): Pr
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error generating complete source code:', error);
+    throw new Error('Error al generar el sistema completo: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+  }
 }
 
 // Generate system README
