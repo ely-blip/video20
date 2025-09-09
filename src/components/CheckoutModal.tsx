@@ -216,8 +216,8 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
     const orderId = generateOrderId();
     const { cashTotal, transferTotal } = calculateTotals();
     const transferFee = transferTotal - items.filter(item => item.paymentType === 'transfer').reduce((sum, item) => {
-      const moviePrice = EMBEDDED_PRICES.moviePrice;
-      const seriesPrice = EMBEDDED_PRICES.seriesPrice;
+      const moviePrice = currentPrices.moviePrice;
+      const seriesPrice = currentPrices.seriesPrice;
       const basePrice = item.type === 'movie' ? moviePrice : (item.selectedSeasons?.length || 1) * seriesPrice;
       return sum + basePrice;
     }, 0);
@@ -229,8 +229,8 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
           ? `\n  📺 Temporadas: ${item.selectedSeasons.sort((a, b) => a - b).join(', ')}` 
           : '';
         const itemType = item.type === 'movie' ? 'Película' : 'Serie';
-        const moviePrice = EMBEDDED_PRICES.moviePrice;
-        const seriesPrice = EMBEDDED_PRICES.seriesPrice;
+        const moviePrice = currentPrices.moviePrice;
+        const seriesPrice = currentPrices.seriesPrice;
         const basePrice = item.type === 'movie' ? moviePrice : (item.selectedSeasons?.length || 1) * seriesPrice;
         const finalPrice = item.paymentType === 'transfer' ? Math.round(basePrice * (1 + transferFeePercentage / 100)) : basePrice;
         const paymentTypeText = item.paymentType === 'transfer' ? `Transferencia (+${transferFeePercentage}%)` : 'Efectivo';
@@ -347,8 +347,8 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
       const { orderId } = generateOrderText();
       const { cashTotal, transferTotal } = calculateTotals();
       const transferFee = transferTotal - items.filter(item => item.paymentType === 'transfer').reduce((sum, item) => {
-        const moviePrice = EMBEDDED_PRICES.moviePrice;
-        const seriesPrice = EMBEDDED_PRICES.seriesPrice;
+        const moviePrice = currentPrices.moviePrice;
+        const seriesPrice = currentPrices.seriesPrice;
         const basePrice = item.type === 'movie' ? moviePrice : (item.selectedSeasons?.length || 1) * seriesPrice;
         return sum + basePrice;
       }, 0);

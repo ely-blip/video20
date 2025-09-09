@@ -1172,7 +1172,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     addNotification({
       type: 'success',
       title: 'Zona de entrega agregada',
-      message: \`Se agregó la zona "\${zone.name}" y se sincronizó automáticamente\`,
+      message: `Se agregó la zona "${zone.name}\" y se sincronizó automáticamente`,
       section: 'Zonas de Entrega',
       action: 'create'
     });
@@ -1184,7 +1184,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     addNotification({
       type: 'success',
       title: 'Zona de entrega actualizada',
-      message: \`Se actualizó la zona "\${zone.name}" y se sincronizó automáticamente\`,
+      message: \`Se actualizó la zona "${zone.name}\" y se sincronizó automáticamente`,
       section: 'Zonas de Entrega',
       action: 'update'
     });
@@ -1197,7 +1197,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     addNotification({
       type: 'warning',
       title: 'Zona de entrega eliminada',
-      message: \`Se eliminó la zona "\${zone?.name || 'Desconocida'}" y se sincronizó automáticamente\`,
+      message: \`Se eliminó la zona "${zone?.name || 'Desconocida'}\" y se sincronizó automáticamente`,
       section: 'Zonas de Entrega',
       action: 'delete'
     });
@@ -1209,7 +1209,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     addNotification({
       type: 'success',
       title: 'Novela agregada',
-      message: \`Se agregó la novela "\${novel.titulo}" y se sincronizó automáticamente\`,
+      message: \`Se agregó la novela "${novel.titulo}\" y se sincronizó automáticamente`,
       section: 'Gestión de Novelas',
       action: 'create'
     });
@@ -1221,7 +1221,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     addNotification({
       type: 'success',
       title: 'Novela actualizada',
-      message: \`Se actualizó la novela "\${novel.titulo}" y se sincronizó automáticamente\`,
+      message: \`Se actualizó la novela "${novel.titulo}\" y se sincronizó automáticamente`,
       section: 'Gestión de Novelas',
       action: 'update'
     });
@@ -1234,7 +1234,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     addNotification({
       type: 'warning',
       title: 'Novela eliminada',
-      message: \`Se eliminó la novela "\${novel?.titulo || 'Desconocida'}" y se sincronizó automáticamente\`,
+      message: \`Se eliminó la novela "${novel?.titulo || 'Desconocida'}\" y se sincronizó automáticamente`,
       section: 'Gestión de Novelas',
       action: 'delete'
     });
@@ -1289,7 +1289,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = \`TV_a_la_Carta_Config_\${new Date().toISOString().split('T')[0]}.json\`;
+      link.download = \`TV_a_la_Carta_Config_${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1691,7 +1691,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'ADD_ITEM', payload: itemWithDefaults });
     
     setToast({
-      message: \`"\${item.title}" agregado al carrito\`,
+      message: `"${item.title}\" agregado al carrito`,
       type: 'success',
       isVisible: true
     });
@@ -1703,7 +1703,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     if (item) {
       setToast({
-        message: \`"\${item.title}" retirado del carrito\`,
+        message: `"${item.title}\" retirado del carrito`,
         type: 'error',
         isVisible: true
       });

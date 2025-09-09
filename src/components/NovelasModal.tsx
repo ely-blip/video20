@@ -27,7 +27,6 @@ interface NovelasModalProps {
   onClose: () => void;
 }
 
-export function NovelasModal({ isOpen, onClose }: NovelasModalProps) {
   const [selectedNovelas, setSelectedNovelas] = useState<number[]>([]);
   const [novelasWithPayment, setNovelasWithPayment] = useState<Novela[]>([]);
   const [showNovelList, setShowNovelList] = useState(false);
@@ -36,11 +35,43 @@ export function NovelasModal({ isOpen, onClose }: NovelasModalProps) {
   const [selectedYear, setSelectedYear] = useState('');
   const [sortBy, setSortBy] = useState<'titulo' | 'año' | 'capitulos'>('titulo');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentNovels, setCurrentNovels] = useState(EMBEDDED_NOVELS);
+  const [currentPrices, setCurrentPrices] = useState(EMBEDDED_PRICES);
 
-  // Get novels and prices from embedded configuration
-  const adminNovels = EMBEDDED_NOVELS;
-  const novelPricePerChapter = EMBEDDED_PRICES.novelPricePerChapter;
-  const transferFeePercentage = EMBEDDED_PRICES.transferFeePercentage;
+  // Listen for admin updates in real-time
+  useEffect(() => {
+    const handleNovelUpdate = (event: CustomEvent) => {
+      setCurrentNovels(event.detail);
+    };
+
+    const handlePriceUpdate = (event: CustomEvent) => {
+      setCurrentPrices(event.detail);
+    };
+
+    const handleAdminStateChange = (event: CustomEvent) => {
+      if (event.detail.novels) {
+        setCurrentNovels(event.detail.novels);
+      }
+      if (event.detail.prices) {
+        setCurrentPrices(event.detail.prices);
+      }
+    };
+
+    window.addEventListener('admin_novels_updated', handleNovelUpdate as EventListener);
+    window.addEventListener('admin_prices_updated', handlePriceUpdate as EventListener);
+    window.addEventListener('admin_state_changed', handleAdminStateChange as EventListener);
+
+    return () => {
+      window.removeEventListener('admin_novels_updated', handleNovelUpdate as EventListener);
+      window.removeEventListener('admin_prices_updated', handlePriceUpdate as EventListener);
+      window.removeEventListener('admin_state_changed', handleAdminStateChange as EventListener);
+    };
+  }, []);
+
+  // Get novels and prices from current configuration (updated in real-time)
+  const adminNovels = currentNovels;
+  const novelPricePerChapter = currentPrices.novelPricePerChapter;
+  const transferFeePercentage = currentPrices.transferFeePercentage;
   
   // Base novels list
   const defaultNovelas: Novela[] = [
