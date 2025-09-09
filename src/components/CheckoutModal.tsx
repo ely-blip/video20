@@ -97,11 +97,11 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
   const allZones = { 
     ...BASE_DELIVERY_ZONES, 
     ...embeddedZonesMap,
-    'Entrega en Local > TV a la Carta > Reparto Nuevo Vista Alegre': 0
+    'Entrega en Local > TV a la Carta > Local TV a la Carta': 0
   };
   const deliveryCost = allZones[deliveryZone as keyof typeof allZones] || 0;
   const finalTotal = total + deliveryCost;
-  const isLocalPickup = deliveryZone === 'Entrega en Local > TV a la Carta > Reparto Nuevo Vista Alegre';
+  const isLocalPickup = deliveryZone === 'Entrega en Local > TV a la Carta > Local TV a la Carta';
 
   // Get current transfer fee percentage from embedded prices
   const transferFeePercentage = EMBEDDED_PRICES.transferFeePercentage;
@@ -272,7 +272,7 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
     
     if (isLocalPickup) {
       orderText += `🏪 *ENTREGA EN LOCAL:*\n`;
-      orderText += `📍 Ubicación: ${TV_A_LA_CARTA_LOCATION.address}\n`;
+      orderText += `📍 Ubicación: Local TV a la Carta\n`;
       orderText += `🗺️ Google Maps: ${TV_A_LA_CARTA_LOCATION.googleMapsUrl}\n`;
       orderText += `💰 Costo: GRATIS\n\n`;
       
@@ -280,7 +280,7 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
       if (distanceInfo.driving || distanceInfo.walking || distanceInfo.bicycling) {
         orderText += `🚗 *INFORMACIÓN DE DISTANCIA Y TIEMPO:*\n`;
         orderText += `📍 Desde: ${customerInfo.address}\n`;
-        orderText += `📍 Hasta: ${TV_A_LA_CARTA_LOCATION.address}\n\n`;
+        orderText += `📍 Hasta: Local TV a la Carta\n\n`;
         
         if (distanceInfo.driving?.status === 'OK') {
           orderText += `🚗 *En Automóvil:*\n`;
@@ -599,7 +599,7 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
                             <LocationIcon className="h-4 w-4 text-blue-600 mr-2" />
                             <span className="text-sm font-semibold text-blue-800">Ubicación del Local:</span>
                           </div>
-                          <p className="text-sm text-blue-700 ml-6">{TV_A_LA_CARTA_LOCATION.address}</p>
+                          <p className="text-sm text-blue-700 ml-6">Local TV a la Carta</p>
                           <div className="mt-2 ml-6">
                             <a
                               href={TV_A_LA_CARTA_LOCATION.googleMapsUrl}
