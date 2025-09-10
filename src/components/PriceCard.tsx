@@ -17,33 +17,10 @@ interface PriceCardProps {
 }
 
 export function PriceCard({ type, selectedSeasons = [], episodeCount = 0, isAnime = false }: PriceCardProps) {
-  const [currentPrices, setCurrentPrices] = React.useState(EMBEDDED_PRICES);
-
-  // Listen for admin price updates in real-time
-  React.useEffect(() => {
-    const handlePriceUpdate = (event: CustomEvent) => {
-      setCurrentPrices(event.detail);
-    };
-
-    const handleAdminStateChange = (event: CustomEvent) => {
-      if (event.detail.prices) {
-        setCurrentPrices(event.detail.prices);
-      }
-    };
-
-    window.addEventListener('admin_prices_updated', handlePriceUpdate as EventListener);
-    window.addEventListener('admin_state_changed', handleAdminStateChange as EventListener);
-
-    return () => {
-      window.removeEventListener('admin_prices_updated', handlePriceUpdate as EventListener);
-      window.removeEventListener('admin_state_changed', handleAdminStateChange as EventListener);
-    };
-  }, []);
-  
-  // Use current prices (updated in real-time)
-  const moviePrice = currentPrices.moviePrice;
-  const seriesPrice = currentPrices.seriesPrice;
-  const transferFeePercentage = currentPrices.transferFeePercentage;
+  // Use embedded prices
+  const moviePrice = EMBEDDED_PRICES.moviePrice;
+  const seriesPrice = EMBEDDED_PRICES.seriesPrice;
+  const transferFeePercentage = EMBEDDED_PRICES.transferFeePercentage;
   
   const calculatePrice = () => {
     if (type === 'movie') {

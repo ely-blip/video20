@@ -206,9 +206,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const calculateItemPrice = (item: SeriesCartItem): number => {
     // Use embedded prices
-    const moviePrice = adminState?.prices?.moviePrice || EMBEDDED_PRICES.moviePrice;
-    const seriesPrice = adminState?.prices?.seriesPrice || EMBEDDED_PRICES.seriesPrice;
-    const transferFeePercentage = adminState?.prices?.transferFeePercentage || EMBEDDED_PRICES.transferFeePercentage;
+    const moviePrice = EMBEDDED_PRICES.moviePrice;
+    const seriesPrice = EMBEDDED_PRICES.seriesPrice;
+    const transferFeePercentage = EMBEDDED_PRICES.transferFeePercentage;
     
     if (item.type === 'movie') {
       const basePrice = moviePrice;
@@ -227,9 +227,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const calculateTotalByPaymentType = (): { cash: number; transfer: number } => {
-    const moviePrice = adminState?.prices?.moviePrice || EMBEDDED_PRICES.moviePrice;
-    const seriesPrice = adminState?.prices?.seriesPrice || EMBEDDED_PRICES.seriesPrice;
-    const transferFeePercentage = adminState?.prices?.transferFeePercentage || EMBEDDED_PRICES.transferFeePercentage;
+    const moviePrice = EMBEDDED_PRICES.moviePrice;
+    const seriesPrice = EMBEDDED_PRICES.seriesPrice;
+    const transferFeePercentage = EMBEDDED_PRICES.transferFeePercentage;
     
     return state.items.reduce((totals, item) => {
       const basePrice = item.type === 'movie' ? moviePrice : (item.selectedSeasons?.length || 1) * seriesPrice;
