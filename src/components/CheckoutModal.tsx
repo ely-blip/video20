@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, User, Phone, Home, CreditCard, DollarSign, MessageCircle, AlertCircle, Check, Truck, Package } from 'lucide-react';
-import { useAdmin } from '../context/AdminContext';
+import { X, User, Phone, MapPin, CreditCard, DollarSign, Truck, Home, MessageCircle, AlertCircle, Check } from 'lucide-react';
+
+// ZONAS DE ENTREGA EMBEBIDAS - Generadas automáticamente
+const EMBEDDED_DELIVERY_ZONES = [];
 
 export interface CustomerInfo {
   fullName: string;
@@ -35,37 +37,68 @@ interface CheckoutModalProps {
 }
 
 export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: CheckoutModalProps) {
-  const { state: adminState } = useAdmin();
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     fullName: '',
     phone: '',
     address: ''
   });
   
-  const [deliveryOption, setDeliveryOption] = useState<'pickup' | 'delivery'>('pickup');
+  const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
   const [selectedZone, setSelectedZone] = useState<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Obtener zonas de entrega del contexto admin en tiempo real
-  const deliveryZones = adminState.deliveryZones || [];
+  // Obtener zonas de entrega actuales del admin context
+  const getCurrentDeliveryZones = () => {
+    try {
+      const adminState = localStorage.getItem('admin_system_state');
+      if (adminState) {
+        const state = JSON.parse(adminState);
+        return state.deliveryZones || EMBEDDED_DELIVERY_ZONES;
+      }
+    } catch (error) {
+      console.warn('Error getting delivery zones:', error);
+    }
+    return EMBEDDED_DELIVERY_ZONES;
+  };
 
-  // Reset form when modal opens/closes
+  const [deliveryZones, setDeliveryZones] = useState(getCurrentDeliveryZones());
+
+  // Escuchar cambios en las zonas de entrega
+  useEffect(() => {
+    const handleAdminChange = (event: CustomEvent) => {
+      if (event.detail.type === 'delivery_zone_add' || 
+          event.detail.type === 'delivery_zone_update' || 
+          event.detail.type === 'delivery_zone_delete') {
+        const updatedZones = getCurrentDeliveryZones();
+        setDeliveryZones(updatedZones);
+        
+        // Si la zona seleccionada fue eliminada, resetear
+        if (selectedZone && !updatedZones.find((z: any) => z.id === selectedZone.id)) {
+          setSelectedZone(null);
+        }
+      }
+    };
+
+    window.addEventListener('admin_state_change', handleAdminChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('admin_state_change', handleAdminChange as EventListener);
+    };
+  }, [selectedZone]);
+
+  // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
       setCustomerInfo({ fullName: '', phone: '', address: '' });
-      setDeliveryOption('pickup');
+      setDeliveryType('pickup');
       setSelectedZone(null);
       setErrors({});
+      setIsSubmitting(false);
+      // Actualizar zonas al abrir el modal
+      setDeliveryZones(getCurrentDeliveryZones());
     }
   }, [isOpen]);
-
-  // Reset selected zone when switching to pickup
-  useEffect(() => {
-    if (deliveryOption === 'pickup') {
-      setSelectedZone(null);
-    }
-  }, [deliveryOption]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -76,7 +109,7 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
 
     if (!customerInfo.phone.trim()) {
       newErrors.phone = 'El teléfono es requerido';
-    } else if (!/^\+?[\d\s-()]+$/.test(customerInfo.phone)) {
+    } else if (!/^[+]?[0-9\s\-()]{8,}$/.test(customerInfo.phone.trim())) {
       newErrors.phone = 'Formato de teléfono inválido';
     }
 
@@ -84,7 +117,7 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
       newErrors.address = 'La dirección es requerida';
     }
 
-    if (deliveryOption === 'delivery' && !selectedZone) {
+    if (deliveryType === 'delivery' && !selectedZone) {
       newErrors.zone = 'Debe seleccionar una zona de entrega';
     }
 
@@ -103,17 +136,18 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
 
     try {
       const orderId = `TV-${Date.now()}`;
-      const deliveryCost = deliveryOption === 'delivery' && selectedZone ? selectedZone.cost : 0;
-      
+      const deliveryCost = deliveryType === 'delivery' && selectedZone ? selectedZone.cost : 0;
+      const finalTotal = total + deliveryCost;
+
       const orderData: OrderData = {
         orderId,
         customerInfo,
-        deliveryZone: deliveryOption === 'delivery' ? selectedZone : { name: 'Recogida en tienda', cost: 0 },
+        deliveryZone: deliveryType === 'delivery' && selectedZone ? selectedZone : { name: 'Recogida en tienda', cost: 0 },
         deliveryCost,
         items,
         subtotal: total,
         transferFee: 0,
-        total: total + deliveryCost
+        total: finalTotal
       };
 
       onCheckout(orderData);
@@ -126,21 +160,16 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
 
   if (!isOpen) return null;
 
+  const deliveryCost = deliveryType === 'delivery' && selectedZone ? selectedZone.cost : 0;
+  const finalTotal = total + deliveryCost;
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[95vh] overflow-hidden shadow-2xl animate-in fade-in duration-300">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="bg-white/20 p-3 rounded-xl mr-4 shadow-lg">
-                <Package className="h-8 w-8" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">Finalizar Pedido</h2>
-                <p className="text-sm opacity-90">Complete sus datos para procesar el pedido</p>
-              </div>
-            </div>
+            <h2 className="text-2xl font-bold">Finalizar Pedido</h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-white/20 rounded-full transition-colors"
@@ -150,76 +179,72 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
           </div>
         </div>
 
-        <div className="overflow-y-auto max-h-[calc(95vh-120px)]">
+        <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Customer Information */}
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-200">
-              <div className="flex items-center mb-4">
-                <div className="bg-blue-500 p-3 rounded-xl mr-4 shadow-lg">
-                  <User className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900">Información del Cliente</h3>
-              </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <User className="h-5 w-5 mr-2 text-blue-600" />
+                Información del Cliente
+              </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre Completo *
-                  </label>
-                  <input
-                    type="text"
-                    value={customerInfo.fullName}
-                    onChange={(e) => setCustomerInfo({ ...customerInfo, fullName: e.target.value })}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.fullName ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Ingrese su nombre completo"
-                  />
-                  {errors.fullName && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.fullName}
-                    </p>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Teléfono *
-                  </label>
-                  <input
-                    type="tel"
-                    value={customerInfo.phone}
-                    onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.phone ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="+53 5469 0878"
-                  />
-                  {errors.phone && (
-                    <p className="text-red-500 text-sm mt-1 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.phone}
-                    </p>
-                  )}
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre Completo *
+                </label>
+                <input
+                  type="text"
+                  value={customerInfo.fullName}
+                  onChange={(e) => setCustomerInfo({ ...customerInfo, fullName: e.target.value })}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.fullName ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Ingrese su nombre completo"
+                />
+                {errors.fullName && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {errors.fullName}
+                  </p>
+                )}
               </div>
-              
-              <div className="mt-4">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Teléfono *
+                </label>
+                <input
+                  type="tel"
+                  value={customerInfo.phone}
+                  onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.phone ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="+53 5555 5555"
+                />
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    {errors.phone}
+                  </p>
+                )}
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Dirección *
                 </label>
                 <textarea
                   value={customerInfo.address}
                   onChange={(e) => setCustomerInfo({ ...customerInfo, address: e.target.value })}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.address ? 'border-red-500' : 'border-gray-300'
                   }`}
                   rows={3}
                   placeholder="Ingrese su dirección completa"
                 />
                 {errors.address && (
-                  <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
                     <AlertCircle className="h-4 w-4 mr-1" />
                     {errors.address}
                   </p>
@@ -228,109 +253,97 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
             </div>
 
             {/* Delivery Options */}
-            <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl p-6 border border-green-200">
-              <div className="flex items-center mb-4">
-                <div className="bg-green-500 p-3 rounded-xl mr-4 shadow-lg">
-                  <Truck className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900">Opciones de Entrega</h3>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Truck className="h-5 w-5 mr-2 text-blue-600" />
+                Opciones de Entrega
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeliveryType('pickup');
+                    setSelectedZone(null);
+                  }}
+                  className={`p-4 border-2 rounded-lg transition-all ${
+                    deliveryType === 'pickup'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center mb-2">
+                    <Home className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-900">Recogida en Tienda</h4>
+                  <p className="text-sm text-gray-600 mt-1">Sin costo adicional</p>
+                  <p className="text-lg font-bold text-green-600 mt-2">Gratis</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('delivery')}
+                  className={`p-4 border-2 rounded-lg transition-all ${
+                    deliveryType === 'delivery'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center mb-2">
+                    <Truck className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-900">Entrega a Domicilio</h4>
+                  <p className="text-sm text-gray-600 mt-1">Según zona seleccionada</p>
+                  <p className="text-lg font-bold text-blue-600 mt-2">
+                    {selectedZone ? `$${selectedZone.cost.toLocaleString()} CUP` : 'Seleccionar zona'}
+                  </p>
+                </button>
               </div>
-              
-              <div className="space-y-4">
-                <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-green-300 transition-colors">
-                  <input
-                    type="radio"
-                    name="delivery"
-                    value="pickup"
-                    checked={deliveryOption === 'pickup'}
-                    onChange={(e) => setDeliveryOption(e.target.value as 'pickup' | 'delivery')}
-                    className="mr-4 h-5 w-5 text-green-600 focus:ring-green-500"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <Home className="h-5 w-5 text-green-600 mr-2" />
-                      <span className="font-semibold text-gray-900">Recogida en Tienda</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">Sin costo adicional</p>
-                  </div>
-                  <div className="text-green-600 font-bold">GRATIS</div>
-                </label>
-                
-                <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-blue-300 transition-colors">
-                  <input
-                    type="radio"
-                    name="delivery"
-                    value="delivery"
-                    checked={deliveryOption === 'delivery'}
-                    onChange={(e) => setDeliveryOption(e.target.value as 'pickup' | 'delivery')}
-                    className="mr-4 h-5 w-5 text-blue-600 focus:ring-blue-500"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center">
-                      <MapPin className="h-5 w-5 text-blue-600 mr-2" />
-                      <span className="font-semibold text-gray-900">Entrega a Domicilio</span>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">Seleccione su zona de entrega</p>
-                  </div>
-                  <div className="text-blue-600 font-bold">
-                    {selectedZone ? `$${selectedZone.cost.toLocaleString()} CUP` : 'Variable'}
-                  </div>
-                </label>
-              </div>
-              
+
               {/* Delivery Zones */}
-              {deliveryOption === 'delivery' && (
-                <div className="mt-6 p-4 bg-white rounded-xl border border-gray-200">
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
-                    <MapPin className="h-5 w-5 text-blue-600 mr-2" />
-                    Seleccionar Zona de Entrega
-                  </h4>
+              {deliveryType === 'delivery' && (
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Seleccionar Zona de Entrega *
+                  </label>
                   
-                  {deliveryZones.length > 0 ? (
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {deliveryZones.map((zone) => (
-                        <label
-                          key={zone.id}
-                          className={`flex items-center justify-between p-3 border-2 rounded-lg cursor-pointer transition-colors ${
-                            selectedZone?.id === zone.id
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-blue-300'
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <input
-                              type="radio"
-                              name="zone"
-                              value={zone.id}
-                              checked={selectedZone?.id === zone.id}
-                              onChange={() => setSelectedZone(zone)}
-                              className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500"
-                            />
-                            <div>
-                              <p className="font-medium text-gray-900">{zone.name}</p>
-                              <p className="text-sm text-gray-600">Costo: ${zone.cost.toLocaleString()} CUP</p>
-                            </div>
-                          </div>
-                          {selectedZone?.id === zone.id && (
-                            <Check className="h-5 w-5 text-blue-600" />
-                          )}
-                        </label>
-                      ))}
+                  {deliveryZones.length === 0 ? (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center">
+                        <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
+                        <p className="text-sm text-yellow-800">
+                          No hay zonas de entrega configuradas. Por favor, seleccione "Recogida en Tienda" o contacte al administrador.
+                        </p>
+                      </div>
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        No hay zonas de entrega configuradas
-                      </h3>
-                      <p className="text-gray-600 mb-4">
-                        Actualmente no hay zonas de entrega disponibles. Por favor, seleccione "Recogida en Tienda".
-                      </p>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {deliveryZones.map((zone: any) => (
+                        <button
+                          key={zone.id}
+                          type="button"
+                          onClick={() => setSelectedZone(zone)}
+                          className={`w-full p-3 text-left border rounded-lg transition-all ${
+                            selectedZone?.id === zone.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-300 hover:border-blue-300'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-medium text-gray-900">{zone.name}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-blue-600">${zone.cost.toLocaleString()} CUP</p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   )}
                   
                   {errors.zone && (
-                    <p className="text-red-500 text-sm mt-2 flex items-center">
+                    <p className="text-sm text-red-600 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-1" />
                       {errors.zone}
                     </p>
@@ -340,69 +353,61 @@ export function CheckoutModal({ isOpen, onClose, onCheckout, items, total }: Che
             </div>
 
             {/* Order Summary */}
-            <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                <Package className="h-6 w-6 text-gray-600 mr-2" />
-                Resumen del Pedido
-              </h3>
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <h3 className="text-lg font-semibold text-gray-900">Resumen del Pedido</h3>
               
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
+              <div className="space-y-2">
+                <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal ({items.length} elementos)</span>
-                  <span className="font-semibold">${total.toLocaleString()} CUP</span>
+                  <span className="font-medium">${total.toLocaleString()} CUP</span>
                 </div>
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Entrega</span>
-                  <span className="font-semibold">
-                    {deliveryOption === 'pickup' 
-                      ? 'GRATIS' 
-                      : selectedZone 
-                        ? `$${selectedZone.cost.toLocaleString()} CUP`
-                        : 'Seleccionar zona'
-                    }
+                <div className="flex justify-between">
+                  <span className="text-gray-600">
+                    {deliveryType === 'pickup' ? 'Recogida en tienda' : 'Entrega a domicilio'}
+                  </span>
+                  <span className="font-medium">
+                    {deliveryCost === 0 ? 'Gratis' : `$${deliveryCost.toLocaleString()} CUP`}
                   </span>
                 </div>
                 
-                <div className="border-t border-gray-300 pt-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold text-gray-900">Total</span>
-                    <span className="text-2xl font-bold text-green-600">
-                      ${(total + (deliveryOption === 'delivery' && selectedZone ? selectedZone.cost : 0)).toLocaleString()} CUP
-                    </span>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span className="text-blue-600">${finalTotal.toLocaleString()} CUP</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Submit Button */}
-            <div className="flex space-x-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-xl font-semibold transition-colors"
-              >
-                Cancelar
-              </button>
-              
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle className="h-5 w-5 mr-2" />
-                    Enviar Pedido por WhatsApp
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting || (deliveryType === 'delivery' && deliveryZones.length === 0)}
+              className={`w-full py-4 px-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center ${
+                isSubmitting || (deliveryType === 'delivery' && deliveryZones.length === 0)
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transform hover:scale-105'
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Procesando...
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="h-5 w-5 mr-2" />
+                  Enviar Pedido por WhatsApp
+                </>
+              )}
+            </button>
+
+            {deliveryType === 'delivery' && deliveryZones.length === 0 && (
+              <p className="text-sm text-yellow-600 text-center">
+                No se puede procesar entrega a domicilio sin zonas configuradas
+              </p>
+            )}
           </form>
         </div>
       </div>

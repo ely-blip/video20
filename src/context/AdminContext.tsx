@@ -470,12 +470,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   // Real-time sync listener
   useEffect(() => {
     const unsubscribe = syncService.subscribe((syncedState) => {
-      // Solo sincronizar si hay cambios reales
-      const hasChanges = JSON.stringify(syncedState.prices) !== JSON.stringify(state.prices) ||
-                         JSON.stringify(syncedState.deliveryZones) !== JSON.stringify(state.deliveryZones) ||
-                         JSON.stringify(syncedState.novels) !== JSON.stringify(state.novels);
-      
-      if (hasChanges) {
+      if (JSON.stringify(syncedState) !== JSON.stringify(state)) {
         dispatch({ type: 'SYNC_STATE', payload: syncedState });
       }
     });
@@ -806,14 +801,6 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         pendingChanges: Math.max(0, state.syncStatus.pendingChanges - 1)
       } 
     });
-
-    // Forzar actualización inmediata del localStorage
-    try {
-      localStorage.setItem('admin_system_state', JSON.stringify(state));
-      localStorage.setItem('system_config', JSON.stringify(state.systemConfig));
-    } catch (error) {
-      console.error('Error saving state immediately:', error);
-    }
 
     window.dispatchEvent(new CustomEvent('admin_state_change', { 
       detail: changeEvent 

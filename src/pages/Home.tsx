@@ -9,61 +9,9 @@ import { ErrorMessage } from '../components/ErrorMessage';
 import { NovelasModal } from '../components/NovelasModal';
 import type { Movie, TVShow } from '../types/movie';
 
-// Hook para escuchar cambios del admin
-function useAdminChanges() {
-  const [adminState, setAdminState] = React.useState<any>(null);
-
-  React.useEffect(() => {
-    // Cargar estado inicial
-    try {
-      const stored = localStorage.getItem('admin_system_state');
-      if (stored) {
-        setAdminState(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error('Error loading admin state:', error);
-    }
-
-    // Escuchar cambios en tiempo real
-    const handleAdminChange = (event: CustomEvent) => {
-      try {
-        const stored = localStorage.getItem('admin_system_state');
-        if (stored) {
-          setAdminState(JSON.parse(stored));
-        }
-      } catch (error) {
-        console.error('Error syncing admin state:', error);
-      }
-    };
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'admin_system_state' && event.newValue) {
-        try {
-          setAdminState(JSON.parse(event.newValue));
-        } catch (error) {
-          console.error('Error parsing admin state from storage:', error);
-        }
-      }
-    };
-
-    window.addEventListener('admin_state_change', handleAdminChange as EventListener);
-    window.addEventListener('admin_full_sync', handleAdminChange as EventListener);
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('admin_state_change', handleAdminChange as EventListener);
-      window.removeEventListener('admin_full_sync', handleAdminChange as EventListener);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  return adminState;
-}
-
 type TrendingTimeWindow = 'day' | 'week';
 
 export function Home() {
-  const adminState = useAdminChanges();
   const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
   const [popularTVShows, setPopularTVShows] = useState<TVShow[]>([]);
   const [popularAnime, setPopularAnime] = useState<TVShow[]>([]);
@@ -74,15 +22,6 @@ export function Home() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [showNovelasModal, setShowNovelasModal] = useState(false);
-
-  // Forzar re-render cuando cambien las novelas del admin
-  const [novelasKey, setNovelasKey] = useState(0);
-  
-  React.useEffect(() => {
-    if (adminState?.novels) {
-      setNovelasKey(prev => prev + 1);
-    }
-  }, [adminState?.novels]);
 
   const timeWindowLabels = {
     day: 'Hoy',
@@ -370,7 +309,6 @@ export function Home() {
       
       {/* Modal de Novelas */}
       <NovelasModal 
-        key={novelasKey}
         isOpen={showNovelasModal} 
         onClose={() => setShowNovelasModal(false)} 
       />
