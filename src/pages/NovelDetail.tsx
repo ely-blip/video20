@@ -232,10 +232,35 @@ export function NovelDetail() {
                   Sinopsis
                 </h2>
               </div>
-              <p className="text-gray-700 leading-relaxed text-lg mb-4">
+              <p className="text-gray-700 leading-relaxed text-lg mb-6">
                 {novel.descripcion || 'Sin descripción disponible.'}
               </p>
-              
+
+              {/* High Definition Novel Image - Optimized for all devices */}
+              <div className="mb-8 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border-2 sm:border-4 border-gray-200 hover:border-pink-300 transition-all duration-300 transform hover:scale-[1.01]">
+                <div className="relative bg-gray-100">
+                  <img
+                    src={backdropUrl}
+                    alt={`Póster de ${novel.titulo}`}
+                    className="w-full h-auto object-cover object-center"
+                    style={{
+                      maxHeight: 'clamp(300px, 50vh, 600px)',
+                      aspectRatio: '16/9'
+                    }}
+                    loading="eager"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&h=1080&fit=crop&q=85';
+                    }}
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 sm:p-4">
+                    <p className="text-white text-xs sm:text-sm font-semibold">
+                      {novel.titulo} • {novel.año}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Novel specific information */}
               <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-4 border border-pink-200">
