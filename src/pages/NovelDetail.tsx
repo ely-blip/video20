@@ -98,17 +98,17 @@ export function NovelDetail() {
     if (novel.imagen) {
       return novel.imagen;
     }
-    // Imagen por defecto basada en el género
+    // Imagen por defecto basada en el género con alta resolución
     const genreImages = {
-      'Drama': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1200&fit=crop',
-      'Romance': 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=800&h=1200&fit=crop',
-      'Acción': 'https://images.unsplash.com/photo-1489599843253-c76cc4bcb8cf?w=800&h=1200&fit=crop',
-      'Comedia': 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&h=1200&fit=crop',
-      'Familia': 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&h=1200&fit=crop'
+      'Drama': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920&h=1080&fit=crop&q=85',
+      'Romance': 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1920&h=1080&fit=crop&q=85',
+      'Acción': 'https://images.unsplash.com/photo-1489599843253-c76cc4bcb8cf?w=1920&h=1080&fit=crop&q=85',
+      'Comedia': 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=1920&h=1080&fit=crop&q=85',
+      'Familia': 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=1920&h=1080&fit=crop&q=85'
     };
-    
-    return genreImages[novel.genero as keyof typeof genreImages] || 
-           'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=1200&fit=crop';
+
+    return genreImages[novel.genero as keyof typeof genreImages] ||
+           'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&h=1080&fit=crop&q=85';
   };
 
   const getCountryFlag = (country: string) => {
@@ -163,10 +163,15 @@ export function NovelDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative h-96 md:h-[500px] overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${backdropUrl})` }}
+      <div className="relative h-[450px] sm:h-[500px] md:h-[550px] lg:h-[600px] overflow-hidden">
+        <img
+          src={backdropUrl}
+          alt={novel.titulo}
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&h=1080&fit=crop';
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
         

@@ -33,17 +33,17 @@ export function NovelCard({ novel }: NovelCardProps) {
     if (novel.imagen) {
       return novel.imagen;
     }
-    // Imagen por defecto basada en el género
+    // Imagen por defecto basada en el género con mejor resolución
     const genreImages = {
-      'Drama': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
-      'Romance': 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=300&h=400&fit=crop',
-      'Acción': 'https://images.unsplash.com/photo-1489599843253-c76cc4bcb8cf?w=300&h=400&fit=crop',
-      'Comedia': 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=400&fit=crop',
-      'Familia': 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=300&h=400&fit=crop'
+      'Drama': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=900&fit=crop&q=85',
+      'Romance': 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&h=900&fit=crop&q=85',
+      'Acción': 'https://images.unsplash.com/photo-1489599843253-c76cc4bcb8cf?w=600&h=900&fit=crop&q=85',
+      'Comedia': 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=600&h=900&fit=crop&q=85',
+      'Familia': 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=600&h=900&fit=crop&q=85'
     };
-    
-    return genreImages[novel.genero as keyof typeof genreImages] || 
-           'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop';
+
+    return genreImages[novel.genero as keyof typeof genreImages] ||
+           'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=900&fit=crop&q=85';
   };
 
   const getCountryFlag = (country: string) => {
@@ -142,12 +142,13 @@ export function NovelCard({ novel }: NovelCardProps) {
           <img
             src={getNovelImage(novel)}
             alt={novel.titulo}
-            className={`w-full h-80 object-cover transition-all duration-200 ${
+            className={`w-full h-80 object-cover object-center transition-all duration-200 ${
               isHovered ? 'scale-102' : ''
             }`}
+            loading="lazy"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop';
+              target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=900&fit=crop&q=85';
             }}
           />
           
